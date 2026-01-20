@@ -6,4 +6,9 @@ public interface IAIService
         string documentText,
         string question,
         CancellationToken cancellationToken = default);
+        
+    IAsyncEnumerable<string> ProcessQuestionWithRAGAsync(
+        string context,
+        string question,
+        CancellationToken cancellationToken = default);
 }

@@ -120,7 +120,7 @@ function App() {
   }, [selectedDocument, sidebarFiles])
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-zinc-900">
+    <div className="flex h-screen w-screen overflow-hidden bg-white dark:bg-zinc-950 transition-colors duration-200">
       <div className="h-full">
         <DashboardSidebar
           files={sidebarFiles}

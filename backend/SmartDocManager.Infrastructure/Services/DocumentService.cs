@@ -15,15 +15,21 @@ public class DocumentService : IDocumentService
     private readonly ApplicationDbContext _context;
     private readonly IHostEnvironment _environment;
     private readonly ILogger<DocumentService> _logger;
+    private readonly IRAGService _ragService;
+    private readonly IVectorStoreService _vectorStoreService;
 
     public DocumentService(
         ApplicationDbContext context,
         IHostEnvironment environment,
-        ILogger<DocumentService> logger)
+        ILogger<DocumentService> logger,
+        IRAGService ragService,
+        IVectorStoreService vectorStoreService)
     {
         _context = context;
         _environment = environment;
         _logger = logger;
+        _ragService = ragService;
+        _vectorStoreService = vectorStoreService;
     }
 
     public async Task<DocumentDto> UploadDocumentAsync(IFormFile file, CancellationToken cancellationToken = default)
@@ -77,6 +83,20 @@ public class DocumentService : IDocumentService
 
         _context.Documents.Add(document);
         await _context.SaveChangesAsync(cancellationToken);
+
+        // Process document for RAG indexing if text was extracted
+        if (!string.IsNullOrEmpty(extractedText))
+        {
+            try
+            {
+                await _ragService.ProcessDocumentAsync(document.Id, extractedText);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the upload - user still gets their document
+                _logger.LogError(ex, "Failed to process document {DocumentId} for RAG indexing", document.Id);
+            }
+        }
 
         return new DocumentDto
         {
@@ -140,7 +160,14 @@ public class DocumentService : IDocumentService
         {
             File.Delete(document.FilePath);
         }
-
+        try
+        {
+            await _vectorStoreService.DeleteChunksByDocumentIdAsync(id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Physical document deleted, but failed to clear vectors for {Id}", id);
+        }
         _context.Documents.Remove(document);
         await _context.SaveChangesAsync(cancellationToken);
 

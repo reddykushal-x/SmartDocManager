@@ -1,7 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+	<PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" Version="9.0.0" />
+	<PackageReference Include="Microsoft.SemanticKernel.Connectors.Sqlite" Version="1.30.0-preview" />
+	<PackageReference Include="Microsoft.SemanticKernel.Connectors.SqliteVec" Version="1.30.0-preview" />
+    <PackageReference Include="System.Data.SQLite" Version="2.0.2" />
     <ProjectReference Include="..\SmartDocManager.Domain\SmartDocManager.Domain.csproj" />
     <ProjectReference Include="..\SmartDocManager.Application\SmartDocManager.Application.csproj" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
@@ -9,13 +14,12 @@
 
   <ItemGroup>
     <PackageReference Include="itext7" Version="8.0.5" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.0.1" />
+	  <PackageReference Include="Microsoft.SemanticKernel" Version="1.30.0" />
   </ItemGroup>
 
   <PropertyGroup>

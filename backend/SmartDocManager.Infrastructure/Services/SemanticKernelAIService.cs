@@ -43,4 +43,32 @@ Please provide a clear and concise answer based on the document content above. I
             }
         }
     }
+
+    public async IAsyncEnumerable<string> ProcessQuestionWithRAGAsync(
+        string context,
+        string question,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var prompt = $@"Answer the user question based ONLY on the following context. If the answer isn't there, say you don't know.
+
+Context:
+{context}
+
+Question: {question}
+
+Please provide a clear and concise answer based only on the context above. If the answer cannot be found in the context, respond with ""I don't have enough information to answer this question based on the provided context.""";
+
+        // Use InvokePromptStreamingAsync for RAG-enhanced response
+        var stream = _kernel.InvokePromptStreamingAsync(prompt, cancellationToken: cancellationToken);
+
+        await foreach (var chunk in stream.WithCancellation(cancellationToken))
+        {
+            // Each chunk is a 'StreamingKernelContent' object; convert it to string
+            var content = chunk.ToString();
+            if (!string.IsNullOrEmpty(content))
+            {
+                yield return content;
+            }
+        }
+    }
 }

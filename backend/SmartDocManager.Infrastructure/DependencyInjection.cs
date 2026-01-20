@@ -25,6 +25,8 @@ public static class DependencyInjection
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IChatService, ChatService>();
         services.AddScoped<IAIService, SemanticKernelAIService>();
+        services.AddScoped<IVectorStoreService, VectorStoreService>();
+        services.AddScoped<IRAGService, RAGService>();
 
         // 2. Setup AI Configuration
         var groqApiKey = configuration["Groq:ApiKey"];

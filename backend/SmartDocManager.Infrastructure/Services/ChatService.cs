@@ -11,15 +11,18 @@ public class ChatService : IChatService
 {
     private readonly ApplicationDbContext _context;
     private readonly IAIService _aiService;
+    private readonly IRAGService _ragService;
     private readonly ILogger<ChatService> _logger;
 
     public ChatService(
         ApplicationDbContext context,
         IAIService aiService,
+        IRAGService ragService,
         ILogger<ChatService> logger)
     {
         _context = context;
         _aiService = aiService;
+        _ragService = ragService;
         _logger = logger;
     }
 
@@ -34,12 +37,18 @@ public class ChatService : IChatService
             throw new ArgumentException($"Document with id {documentId} not found", nameof(documentId));
         }
 
-        if (string.IsNullOrWhiteSpace(document.ExtractedText))
+        // Use RAG to get relevant chunks instead of full document text
+        var relevantChunks = await _ragService.GetRelevantChunksAsync(question, 3);
+        
+        if (!relevantChunks.Any())
         {
-            throw new InvalidOperationException("Document text has not been extracted yet");
+            throw new InvalidOperationException("No relevant content found in the document. The document may not have been processed for RAG yet.");
         }
 
-        await foreach (var chunk in _aiService.ProcessQuestionAsync(document.ExtractedText, question, cancellationToken))
+        // Combine the relevant chunks into context
+        var context = string.Join("\n\n", relevantChunks.Select(c => c.Text));
+
+        await foreach (var chunk in _aiService.ProcessQuestionWithRAGAsync(context, question, cancellationToken))
         {
             fullResponse += chunk;
         }
@@ -49,7 +58,7 @@ public class ChatService : IChatService
             Id = Guid.NewGuid(),
             DocumentId = documentId,
             Message = question,
-            Response = fullResponse, // Use the collected string here
+            Response = fullResponse,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -76,12 +85,18 @@ public class ChatService : IChatService
             throw new ArgumentException($"Document with id {documentId} not found", nameof(documentId));
         }
 
-        if (string.IsNullOrWhiteSpace(document.ExtractedText))
+        // Use RAG to get relevant chunks instead of full document text
+        var relevantChunks = await _ragService.GetRelevantChunksAsync(question, 3);
+        
+        if (!relevantChunks.Any())
         {
-            throw new InvalidOperationException("Document text has not been extracted yet");
+            throw new InvalidOperationException("No relevant content found in the document. The document may not have been processed for RAG yet.");
         }
 
-        await foreach (var chunk in _aiService.ProcessQuestionAsync(document.ExtractedText, question, cancellationToken))
+        // Combine the relevant chunks into context
+        var context = string.Join("\n\n", relevantChunks.Select(c => c.Text));
+
+        await foreach (var chunk in _aiService.ProcessQuestionWithRAGAsync(context, question, cancellationToken))
         {
             yield return chunk;
         }

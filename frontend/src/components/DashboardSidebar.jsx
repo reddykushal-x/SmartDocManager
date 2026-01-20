@@ -4,6 +4,7 @@ import { FileText, Upload, Trash2, CheckCircle, Loader2, AlertCircle, ChevronLef
 import { Button } from './ui/Button'
 import { ScrollArea } from './ui/ScrollArea'
 import { Input } from './ui/Input'
+import { ThemeToggle } from './ThemeToggle'
 import { cn } from '../lib/utils'
 
 /**
@@ -84,16 +85,19 @@ export function DashboardSidebar({
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500">
             <FileText className="h-4 w-4 text-white" />
           </div>
-          <span className="font-semibold text-zinc-100">PDF Analyzer</span>
+          <span className="font-semibold text-zinc-100">DocuMind AI</span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggle}
-          className="h-8 w-8 text-zinc-400 hover:bg-zinc-800"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className="h-8 w-8 text-zinc-400 hover:bg-zinc-800"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Upload Zone */}
@@ -145,39 +149,41 @@ export function DashboardSidebar({
       <ScrollArea className="flex-1 min-h-0 overflow-y-auto px-2">
         <div className="space-y-1 pb-4">
           {filteredFiles.map((file) => (
-            <div
-              key={file.id}
-              onClick={() => file.status === 'ready' && onSelectFile(file)}
-              className={cn(
-                'group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors cursor-pointer',
-                selectedFile && selectedFile.id === file.id
-                  ? 'bg-zinc-800 text-zinc-100'
-                  : 'hover:bg-zinc-900 text-zinc-100',
-                file.status !== 'ready' && 'opacity-60 cursor-default',
-              )}
-            >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-zinc-800">
-                <FileText className="h-4 w-4 text-zinc-300" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{file.name}</p>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-zinc-400">{file.size}</span>
-                  {getStatusIcon(file.status)}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDeleteFile(file.id)
-                }}
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-400 hover:bg-transparent"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+           <div
+  key={file.id}
+  onClick={() => file.status === 'ready' && onSelectFile(file)}
+  className={cn(
+    'group flex items-center gap-2 rounded-lg px-3 py-2.5 transition-colors cursor-pointer',
+    selectedFile && selectedFile.id === file.id
+      ? 'bg-zinc-800 text-zinc-100'
+      : 'hover:bg-zinc-900 text-zinc-100',
+    file.status !== 'ready' && 'opacity-60 cursor-default',
+  )}
+>
+  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-zinc-800">
+    <FileText className="h-4 w-4 text-zinc-300" />
+  </div>
+
+  <div className="flex-1 min-w-0 mr-2">
+    <p className="text-sm font-medium break-words pr-1">{file.name}</p>
+    <div className="flex items-center gap-2 mt-0.5">
+      <span className="text-xs text-zinc-400 dark:text-zinc-500">{file.size}</span>
+      {getStatusIcon(file.status)}
+    </div>
+  </div>
+
+  <Button
+    variant="ghost"
+    size="icon"
+    onClick={(e) => {
+      e.stopPropagation()
+      onDeleteFile(file.id)
+    }}
+    className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 text-zinc-400 dark:text-zinc-500 hover:text-red-400 dark:hover:text-red-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+  >
+    <Trash2 className="h-3.5 w-3.5" />
+  </Button>
+</div>
           ))}
 
           {filteredFiles.length === 0 && (

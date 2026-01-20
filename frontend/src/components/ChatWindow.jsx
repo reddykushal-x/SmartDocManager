@@ -204,7 +204,7 @@ function ChatWindow({ document, onDocumentChange }) {
       <header className="shrink-0 flex items-center gap-3 px-4 py-3 border-b border-zinc-800 bg-zinc-900">
         <div className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-emerald-500" />
-          <h1 className="font-semibold text-zinc-100">AI Document Chat</h1>
+          <h1 className="font-semibold text-zinc-100">Document Chat</h1>
         </div>
         {document && (
           <div className="ml-auto flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-800 text-zinc-300">
@@ -218,54 +218,67 @@ function ChatWindow({ document, onDocumentChange }) {
         <>
           <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto bg-zinc-900 p-4">
             <div className="max-w-3xl mx-auto space-y-6">
-              {messages.map((message) => (
-                <div
-                  key={message.id || message.type}
-                  className={cn('flex gap-3', message.type === 'user' ? 'justify-end' : 'justify-start')}
-                >
-                  {message.type === 'assistant' && (
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800">
-                      <Sparkles className="h-4 w-4 text-emerald-500" />
-                    </div>
-                  )}
-                  <div
-                    className={cn(
-                      'group relative max-w-[85%] rounded-2xl px-4 py-3',
-                      message.type === 'user'
-                        ? 'bg-zinc-700 text-zinc-100'
-                        : message.error
-                        ? 'bg-red-900/30 border border-red-800 text-red-300'
-                        : 'bg-zinc-800 border border-zinc-700 text-zinc-100',
-                    )}
-                  >
-                    <div className="text-sm leading-7 prose prose-sm prose-invert prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 max-w-none">
-                      {message.error ? (
-                        <div className="whitespace-pre-wrap">{message.text}</div>
-                      ) : message.type === 'assistant' ? (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {message.text || ''}
-                        </ReactMarkdown>
-                      ) : (
-                        <div className="whitespace-pre-wrap">{message.text}</div>
-                      )}
-                    </div>
-                    {message.type === 'assistant' && !message.error && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleCopy(message.text, message.id)}
-                        className="absolute -right-2 -top-2 h-7 w-7 opacity-0 group-hover:opacity-100 bg-zinc-700 border border-zinc-600 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-600"
-                      >
-                        {copiedId === message.id ? (
-                          <Check className="h-3 w-3 text-emerald-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
+            {messages.map((message) => (
+  <div
+    key={message.id || message.type}
+    className={cn('flex gap-3', message.type === 'user' ? 'justify-end' : 'justify-start')}
+  >
+    {message.type === 'assistant' && (
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-800">
+        <Sparkles className="h-4 w-4 text-emerald-500" />
+      </div>
+    )}
+    <div
+      className={cn(
+        /* ADDED 'relative' HERE: This anchors the button to the bubble */
+        'group relative max-w-[85%] rounded-2xl px-4 py-3',
+        message.type === 'user'
+          ? 'bg-red-900/30 border border-red-800 text-red-300'
+          : message.error
+          ? 'bg-red-900/30 border border-red-800 text-red-300'
+          : 'bg-red-900/30 border border-red-800 text-red-300'
+      )}
+    >
+      {message.type === 'assistant' && !message.error ? (
+        <>
+          {/* THE BUTTON: Changed to absolute to float inside the corner */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleCopy(message.text, message.id)}
+            className={cn(
+              /* 'absolute right-2 top-2' moves it exactly where you wanted */
+              "absolute right-2 top-2 z-10 h-7 w-7", 
+              "opacity-0 group-hover:opacity-100",
+              "bg-zinc-900/90 border border-zinc-700 shadow-xl",
+              "text-zinc-300 hover:text-zinc-100",
+              "transition-all"
+            )}
+          >
+            {copiedId === message.id ? (
+              <Check className="h-3 w-3 text-emerald-500" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+          </Button>
+
+          {/* THE TEXT: pr-8 so text doesn't overlap the absolute-positioned Copy button */}
+          <div className="min-w-0 w-full overflow-hidden whitespace-normal break-words pr-8">
+            <div className="text-sm leading-7 prose prose-sm prose-invert prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.text || ''}
+              </ReactMarkdown>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="text-sm leading-7 prose prose-sm prose-invert max-w-none">
+          <div className="whitespace-pre-wrap">{message.text}</div>
+        </div>
+      )}
+    </div>
+  </div>
+))}
 
               {loading && (
                 <div className="flex gap-3">
@@ -305,15 +318,20 @@ function ChatWindow({ document, onDocumentChange }) {
             <div className="max-w-3xl mx-auto">
               <div className="flex items-end gap-3">
                 <div className="flex-1 relative">
-                  <textarea
-                    ref={textareaRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask a question about your document..."
-                    className="w-full min-h-[48px] max-h-[150px] px-4 py-3 rounded-xl border border-zinc-700 bg-zinc-800 text-zinc-100 placeholder:text-zinc-500 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-shadow"
-                    rows={1}
-                  />
+                <textarea
+  id="chat-input"
+  name="chat-message"
+  ref={textareaRef}
+  value={input}
+  onChange={(e) => setInput(e.target.value)}
+  onKeyDown={handleKeyDown}
+  placeholder="Ask a question about your document..."
+  className="w-full min-h-[48px] max-h-[150px] px-4 py-3 rounded-xl bg-zinc-800 text-zinc-100 placeholder:text-zinc-500 resize-none 
+             border-none focus:border-none 
+             outline-none focus:outline-none 
+             ring-0 focus:ring-0 focus:ring-offset-0 focus:ring-transparent"
+  rows={1}
+/>
                 </div>
                 <Button
                   onClick={loading ? handleStop : handleSend}

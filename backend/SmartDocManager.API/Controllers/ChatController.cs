@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SmartDocManager.Application.DTOs;
 using SmartDocManager.Application.Interfaces;
+using SmartDocManager.Infrastructure.Services;
 using System.Text;
 
 namespace SmartDocManager.API.Controllers;
@@ -10,13 +11,16 @@ namespace SmartDocManager.API.Controllers;
 public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
+    private readonly IRAGService _ragService;
     private readonly ILogger<ChatController> _logger;
 
     public ChatController(
         IChatService chatService,
+        IRAGService ragService,
         ILogger<ChatController> logger)
     {
         _chatService = chatService;
+        _ragService = ragService;
         _logger = logger;
     }
 
@@ -61,8 +65,11 @@ public class ChatController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Question))
         {
-            Response.StatusCode = 400;
-            await Response.WriteAsync("Question cannot be empty", cancellationToken);
+            if (!Response.HasStarted)
+            {
+                Response.StatusCode = 400;
+                await Response.WriteAsync("Question cannot be empty", cancellationToken);
+            }
             return;
         }
 
@@ -90,11 +97,28 @@ public class ChatController : ControllerBase
                 // Gracefully handle cancellation - just return without error
                 return;
             }
+            catch (Exception ex) when (Response.HasStarted)
+            {
+                // Error occurred during streaming - response has started, send SSE error message
+                _logger.LogError(ex, "Error during streaming for document {DocumentId}", documentId);
+                var errorMessage = "An error occurred while processing the stream";
+                var errorData = $"data: {System.Text.Json.JsonSerializer.Serialize(new { error = errorMessage })}\n\n";
+                var errorBytes = Encoding.UTF8.GetBytes(errorData);
+                await Response.Body.WriteAsync(errorBytes, 0, errorBytes.Length, cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+                return; // Don't re-throw, error already sent
+            }
         }
         catch (ArgumentException ex)
         {
             _logger.LogWarning(ex, "Invalid request for document {DocumentId}", documentId);
-            Response.StatusCode = 404;
+            
+            if (!Response.HasStarted)
+            {
+                Response.StatusCode = 404;
+            }
+            
+            // Send error as SSE message (JSON, not base64, so error is readable)
             var errorData = $"data: {System.Text.Json.JsonSerializer.Serialize(new { error = ex.Message })}\n\n";
             var errorBytes = Encoding.UTF8.GetBytes(errorData);
             await Response.Body.WriteAsync(errorBytes, 0, errorBytes.Length, cancellationToken);
@@ -103,7 +127,13 @@ public class ChatController : ControllerBase
         catch (InvalidOperationException ex)
         {
             _logger.LogWarning(ex, "Document {DocumentId} not processed", documentId);
-            Response.StatusCode = 400;
+            
+            if (!Response.HasStarted)
+            {
+                Response.StatusCode = 400;
+            }
+            
+            // Send error as SSE message (JSON, not base64, so error is readable)
             var errorData = $"data: {System.Text.Json.JsonSerializer.Serialize(new { error = ex.Message })}\n\n";
             var errorBytes = Encoding.UTF8.GetBytes(errorData);
             await Response.Body.WriteAsync(errorBytes, 0, errorBytes.Length, cancellationToken);
@@ -117,8 +147,15 @@ public class ChatController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing question for document {DocumentId}", documentId);
-            Response.StatusCode = 500;
-            var errorData = $"data: {System.Text.Json.JsonSerializer.Serialize(new { error = "An error occurred while processing your question" })}\n\n";
+            
+            if (!Response.HasStarted)
+            {
+                Response.StatusCode = 500;
+            }
+            
+            // Send error as SSE message (JSON, not base64, so error is readable)
+            var errorMessage = "An error occurred while processing your question";
+            var errorData = $"data: {System.Text.Json.JsonSerializer.Serialize(new { error = errorMessage })}\n\n";
             var errorBytes = Encoding.UTF8.GetBytes(errorData);
             await Response.Body.WriteAsync(errorBytes, 0, errorBytes.Length, cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
