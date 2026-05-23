@@ -35,6 +35,12 @@ A full-stack application for uploading, managing, and querying PDF documents usi
 
 ---
 
+## Architecture cheat sheet
+
+For diagrams (Mermaid), layer breakdown, API table, and interview Q&A, see **[docs/ARCHITECTURE_CHEATSHEET.md](docs/ARCHITECTURE_CHEATSHEET.md)**.
+
+---
+
 ## Project Structure
 
 ```

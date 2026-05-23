@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# SQLite Database binaries and logs
+backend/SmartDocManager.API/SmartDocManager.db
+backend/SmartDocManager.API/SmartDocManager.db-shm
+backend/SmartDocManager.API/SmartDocManager.db-wal
+
+# Uploaded PDF assets
+backend/SmartDocManager.API/Uploads/
