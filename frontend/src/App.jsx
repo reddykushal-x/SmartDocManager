@@ -4,7 +4,14 @@ import axios from 'axios'
 import { DashboardSidebar } from './components/DashboardSidebar'
 import DashboardChatWindow from './components/DashboardChatWindow'
 
-const API_BASE_URL = 'http://localhost:5000/api'
+const API_BASE_URL = getApiUrl();
+
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return `${import.meta.env.VITE_API_BASE_URL}/api`;
+  }
+  return 'http://localhost:5000/api';
+};
 
 function App() {
   const [message, setMessage] = useState('')
